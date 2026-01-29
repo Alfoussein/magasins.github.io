@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lyra | Master Inventory Pro</title>
+    <style>
+        :root { --border-width: 5px; --main-opacity: 1; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #121212; color: #e0e0e0; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        #image-section { padding: 15px; text-align: center; background: #1e1e1e; border: var(--border-width) solid white; margin: 10px; flex-shrink: 0; }
+        #main-view { max-width: 100%; height: 120px; object-fit: cover; opacity: var(--main-opacity); border-radius: 4px; }
+
+        .input-zone { padding: 10px 15px; background: #252525; display: flex; flex-direction: column; gap: 10px; }
+        #data-input { width: 100%; height: 60px; background: #333; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 8px; font-size: 12px; resize: none; }
+
+        .table-container { position: relative; flex-grow: 1; overflow-y: auto; margin: 5px 10px 10px 10px; background: #fff; border-radius: 5px;
+            mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+        }
+
+        table { width: 100%; border-collapse: collapse; color: #222; font-size: 11px; }
+        th { position: sticky; top: 0; background: #2c3e50; color: white; padding: 10px 5px; z-index: 10; }
+        td { padding: 8px 5px; border-bottom: 1px solid #eee; text-align: center; }
+
+        .status-present { background-color: #2ecc71 !important; color: white; }
+        .status-absent { background-color: #e74c3c !important; color: white; }
+        .status-promo { background-color: #f39c12 !important; color: white; }
+        .status-ticket { background-color: #f8bbd0 !important; color: #880e4f; }
+
+        .controls { display: flex; justify-content: space-around; align-items: center; padding: 10px; background: #1e1e1e; border-top: 1px solid #333; flex-wrap: wrap; gap: 10px; }
+        .btn { padding: 8px 15px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; }
+        .btn-update { background: #27ae60; }
+        .btn-smart { background: #8e44ad; }
+        .slider-box { font-size: 12px; display: flex; align-items: center; gap: 5px; }
+    </style>
+</head>
+<body>
+<div id="image-section"><img id="main-view" src="https://via.placeholder.com/800x200?text=Aperçu+du+Rayon"></div>
+<div class="input-zone">
+    <textarea id="data-input" placeholder="Copiez les données Gemini ici..."></textarea>
+    <div style="display:flex; gap:10px;">
+        <button class="btn btn-update" onclick="processData()">METTRE À JOUR</button>
+        <button class="btn btn-smart">SMART BUTTON</button>
+    </div>
+</div>
+<div class="controls">
+    <div class="slider-box"><label>Bordure</label><input type="range" min="0" max="30" value="5" oninput="document.documentElement.style.setProperty('--border-width', this.value + 'px')"></div>
+    <div class="slider-box"><label>Opacité</label><input type="range" min="0.1" max="1" step="0.1" value="1" oninput="document.documentElement.style.setProperty('--main-opacity', this.value)"></div>
+</div>
+<div class="table-container">
+    <table id="inv-table">
+        <thead><tr><th>Section</th><th>Produit</th><th>Rayon</th><th>Pos.</th><th>Étage</th><th>Prix</th><th>Poids</th><th>P/kg</th><th>Promo</th></tr></thead>
+        <tbody></tbody>
+    </table>
+</div>
+<script>
+    function processData() {
+        const input = document.getElementById('data-input').value.trim();
+        if (!input) return;
+        const lines = input.split('\n');
+        const tbody = document.querySelector('#inv-table tbody');
+        lines.forEach(line => {
+            const cols = line.split(',');
+            if (cols.length < 9) return;
+            const tr = document.createElement('tr');
+            const status = cols[9] ? cols[9].trim().toLowerCase() : "";
+            if (status === 'present') tr.classList.add('status-present');
+            else if (status === 'absent') tr.classList.add('status-absent');
+            else if (status === 'promo') tr.classList.add('status-promo');
+            else if (status === 'ticket') tr.classList.add('status-ticket');
+            tr.innerHTML = cols.slice(0, 9).map(v => `<td>${v}</td>`).join('');
+            tbody.appendChild(tr);
+        });
+        document.getElementById('data-input').value = '';
+        document.querySelector('.table-container').scrollTop = document.querySelector('.table-container').scrollHeight;
+    }
+</script>
+</body>
+</html>
