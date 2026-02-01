@@ -3,78 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lyra | Master Inventory Pro</title>
+    <title>Lyra | Master Inventory Pro V3.1 (Anti-Reflet)</title>
     <style>
         :root { --border-width: 5px; --main-opacity: 1; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #121212; color: #e0e0e0; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        #image-section { padding: 15px; text-align: center; background: #1e1e1e; border: var(--border-width) solid white; margin: 10px; flex-shrink: 0; }
+        /* ZONE IMAGE (Contrôle visuel) */
+        #image-section { padding: 10px; text-align: center; background: #1e1e1e; border: var(--border-width) solid white; margin: 10px; flex-shrink: 0; transition: all 0.2s; }
         #main-view { max-width: 100%; height: 120px; object-fit: cover; opacity: var(--main-opacity); border-radius: 4px; }
 
-        .input-zone { padding: 10px 15px; background: #252525; display: flex; flex-direction: column; gap: 10px; }
-        #data-input { width: 100%; height: 60px; background: #333; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 8px; font-size: 12px; resize: none; }
+        /* ZONE SAISIE */
+        .input-zone { padding: 10px 15px; background: #252525; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid #444; }
+        #data-input { width: 100%; height: 50px; background: #333; color: #fff; border: 1px solid #555; border-radius: 4px; padding: 8px; font-size: 12px; resize: none; font-family: monospace; }
+        #data-input:focus { border-color: #2ecc71; outline: none; }
 
-        .table-container { position: relative; flex-grow: 1; overflow-y: auto; margin: 5px 10px 10px 10px; background: #fff; border-radius: 5px;
-            mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
-            -webkit-mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+        /* BOUTONS ET CONTROLES */
+        .controls-wrapper { display: flex; justify-content: space-between; align-items: center; }
+        .btn { padding: 8px 20px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; text-transform: uppercase; letter-spacing: 0.5px; font-size: 11px; }
+        .btn-update { background: linear-gradient(135deg, #27ae60, #2ecc71); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .btn-update:hover { background: #2ecc71; }
+        
+        .sliders { display: flex; gap: 15px; font-size: 11px; color: #bbb; }
+        .slider-box { display: flex; align-items: center; gap: 5px; }
+        input[type=range] { accent-color: #2ecc71; cursor: pointer; }
+
+        /* TABLEAU DE DONNÉES */
+        .table-container { position: relative; flex-grow: 1; overflow-y: auto; margin: 0 10px 10px 10px; background: #fff; border-radius: 0 0 5px 5px; }
+        table { width: 100%; border-collapse: collapse; color: #222; font-size: 12px; }
+        th { position: sticky; top: 0; background: #2c3e50; color: white; padding: 12px 5px; z-index: 10; font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; }
+        td { padding: 10px 5px; border-bottom: 1px solid #eee; text-align: center; font-weight: 500; vertical-align: middle; }
+
+        /* --- LOGIQUE COULEURS & STATUS (LE CŒUR DU SYSTÈME) --- */
+        
+        /* 1. Présent (Vert) */
+        .status-present { background-color: #dcedc8 !important; color: #33691e; }
+        .status-present td { border-bottom: 1px solid #c5e1a5; }
+
+        /* 2. Promo (Orange) */
+        .status-promo { background-color: #ffe0b2 !important; color: #e65100; }
+
+        /* 3. Absent (Rouge) */
+        .status-absent { background-color: #ffcdd2 !important; color: #b71c1c; }
+
+        /* 4. TICKET / DOUTE (ROSE) - C'est ici que ça se joue */
+        .status-ticket { background-color: #f8bbd0 !important; color: #880e4f; font-weight: bold; }
+
+        /* --- ALERTE PRIX CRITIQUE --- */
+        /* Appliqué uniquement sur la cellule PRIX si 0.00 ou statut ticket */
+        .price-alert { 
+            background-color: #fff176 !important; /* Jaune vif */
+            color: #d50000 !important; /* Rouge sang */
+            font-weight: 900 !important;
+            border: 2px solid #d50000 !important;
+            animation: pulse 2s infinite;
         }
 
-        table { width: 100%; border-collapse: collapse; color: #222; font-size: 11px; }
-        th { position: sticky; top: 0; background: #2c3e50; color: white; padding: 10px 5px; z-index: 10; }
-        td { padding: 8px 5px; border-bottom: 1px solid #eee; text-align: center; }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(213, 0, 0, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(213, 0, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(213, 0, 0, 0); }
+        }
 
-        .status-present { background-color: #2ecc71 !important; color: white; }
-        .status-absent { background-color: #e74c3c !important; color: white; }
-        .status-promo { background-color: #f39c12 !important; color: white; }
-        .status-ticket { background-color: #f8bbd0 !important; color: #880e4f; }
-
-        .controls { display: flex; justify-content: space-around; align-items: center; padding: 10px; background: #1e1e1e; border-top: 1px solid #333; flex-wrap: wrap; gap: 10px; }
-        .btn { padding: 8px 15px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; color: white; }
-        .btn-update { background: #27ae60; }
-        .btn-smart { background: #8e44ad; }
-        .slider-box { font-size: 12px; display: flex; align-items: center; gap: 5px; }
     </style>
 </head>
 <body>
-<div id="image-section"><img id="main-view" src="https://via.placeholder.com/800x200?text=Aperçu+du+Rayon"></div>
+
+<div id="image-section">
+    <img id="main-view" src="https://via.placeholder.com/800x200?text=Aperçu+Rayon+-+En+attente+de+données...">
+</div>
+
 <div class="input-zone">
-    <textarea id="data-input" placeholder="Copiez les données Gemini ici..."></textarea>
-    <div style="display:flex; gap:10px;">
-        <button class="btn btn-update" onclick="processData()">METTRE À JOUR</button>
-        <button class="btn btn-smart">SMART BUTTON</button>
+    <textarea id="data-input" placeholder="Collez le CSV généré par l'IA ici (Format: Section, Produit, Rayon, Pos, Etage, Prix, Poids, Kg, Promo, Statut)"></textarea>
+    
+    <div class="controls-wrapper">
+        <button class="btn btn-update" onclick="processData()">▶ Mettre à jour l'Inventaire</button>
+        
+        <div class="sliders">
+            <div class="slider-box">
+                <label>Cadre</label>
+                <input type="range" min="0" max="20" value="5" oninput="document.documentElement.style.setProperty('--border-width', this.value + 'px')">
+            </div>
+            <div class="slider-box">
+                <label>Opacité</label>
+                <input type="range" min="0.2" max="1" step="0.1" value="1" oninput="document.documentElement.style.setProperty('--main-opacity', this.value)">
+            </div>
+        </div>
     </div>
 </div>
-<div class="controls">
-    <div class="slider-box"><label>Bordure</label><input type="range" min="0" max="30" value="5" oninput="document.documentElement.style.setProperty('--border-width', this.value + 'px')"></div>
-    <div class="slider-box"><label>Opacité</label><input type="range" min="0.1" max="1" step="0.1" value="1" oninput="document.documentElement.style.setProperty('--main-opacity', this.value)"></div>
-</div>
+
 <div class="table-container">
     <table id="inv-table">
-        <thead><tr><th>Section</th><th>Produit</th><th>Rayon</th><th>Pos.</th><th>Étage</th><th>Prix</th><th>Poids</th><th>P/kg</th><th>Promo</th></tr></thead>
+        <thead>
+            <tr>
+                <th style="width:15%">Section</th>
+                <th style="width:25%">Produit</th>
+                <th style="width:5%">Rayon</th>
+                <th style="width:5%">Pos.</th>
+                <th style="width:5%">Étage</th>
+                <th style="width:10%">PRIX</th> <th style="width:10%">Poids</th>
+                <th style="width:10%">P/kg</th>
+                <th style="width:5%">Promo</th>
+            </tr>
+        </thead>
         <tbody></tbody>
     </table>
 </div>
+
 <script>
     function processData() {
         const input = document.getElementById('data-input').value.trim();
-        if (!input) return;
+        if (!input) {
+            alert("Aucune donnée détectée ! Copiez le CSV depuis l'IA.");
+            return;
+        }
+
         const lines = input.split('\n');
         const tbody = document.querySelector('#inv-table tbody');
+        
+        // Optionnel : Vider le tableau avant mise à jour ? 
+        // Décommente la ligne suivante si tu veux effacer l'ancien contenu à chaque fois :
+        // tbody.innerHTML = ''; 
+
         lines.forEach(line => {
-            const cols = line.split(',');
-            if (cols.length < 9) return;
+            // Nettoyage de la ligne (virgules flottantes, espaces)
+            const cols = line.split(',').map(c => c.trim());
+            
+            // Vérification de sécurité (10 colonnes minimum requises)
+            if (cols.length < 10) return; 
+
             const tr = document.createElement('tr');
-            const status = cols[9] ? cols[9].trim().toLowerCase() : "";
-            if (status === 'present') tr.classList.add('status-present');
-            else if (status === 'absent') tr.classList.add('status-absent');
-            else if (status === 'promo') tr.classList.add('status-promo');
-            else if (status === 'ticket') tr.classList.add('status-ticket');
-            tr.innerHTML = cols.slice(0, 9).map(v => `<td>${v}</td>`).join('');
+            
+            // Récupération intelligente des données
+            const prixRaw = cols[5]; // Colonne Prix
+            const statutRaw = cols[9].toLowerCase(); // Colonne Statut (dernière)
+
+            // 1. APPLICATION DU STYLE DE LIGNE (Priorité aux statuts)
+            if (statutRaw.includes('present')) tr.classList.add('status-present');
+            else if (statutRaw.includes('absent')) tr.classList.add('status-absent');
+            else if (statutRaw.includes('promo')) tr.classList.add('status-promo');
+            else if (statutRaw.includes('ticket')) tr.classList.add('status-ticket');
+
+            // 2. CONSTRUCTION DES CELLULES
+            // On ne prend que les 9 premières colonnes pour l'affichage (la 10eme sert au code couleur)
+            let htmlContent = "";
+            
+            for (let i = 0; i < 9; i++) {
+                let cellValue = cols[i];
+                let cellClass = "";
+
+                // --- ALERTE ANTI-DOUTE ---
+                // Si on est dans la colonne PRIX (index 5)
+                // ET (le prix est 0.00 OU le statut est ticket/rose)
+                if (i === 5) {
+                    if (cellValue === "0.00" || statutRaw.includes('ticket')) {
+                        cellClass = "class='price-alert'";
+                        if(cellValue === "0.00") cellValue = "⚠️ 0.00"; // Ajout visuel d'alerte
+                    }
+                }
+
+                // Pour la colonne Promo (index 8), on met juste OUI/NON ou vide pour la clarté
+                if (i === 8 && cellValue === "") cellValue = "-";
+
+                htmlContent += `<td ${cellClass}>${cellValue}</td>`;
+            }
+
+            tr.innerHTML = htmlContent;
             tbody.appendChild(tr);
         });
+
+        // Reset et Scroll
         document.getElementById('data-input').value = '';
-        document.querySelector('.table-container').scrollTop = document.querySelector('.table-container').scrollHeight;
+        const container = document.querySelector('.table-container');
+        container.scrollTop = container.scrollHeight;
     }
 </script>
+
 </body>
 </html>
